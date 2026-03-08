@@ -71,6 +71,15 @@ function App() {
     }
   }
 
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    let password = "";
+    for (let i = 0; i < 16; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setFormData({ ...formData, contraseña: password });
+  }
+
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de que quieres borrar esta cuenta?')) return
 
@@ -245,6 +254,17 @@ function App() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Email</label>
                 <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
                   value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Contraseña</label>
+                  <button type="button" onClick={generatePassword} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'card-bold' }}>
+                    ⚡ Generar Segura
+                  </button>
+                </div>
+                <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                  value={formData.contraseña} onChange={e => setFormData({ ...formData, contraseña: e.target.value })} />
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
