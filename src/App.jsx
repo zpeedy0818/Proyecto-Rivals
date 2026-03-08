@@ -3,6 +3,8 @@ import { sheetsService } from './services/sheetsService'
 import { eldoradoService } from './services/eldoradoService'
 import { rivalsService } from './services/rivalsService'
 import { supabaseService } from './services/supabaseService'
+import { authService } from './services/authService'
+import LoginPage from './LoginPage'
 
 const RANK_TIERS = [
   { name: 'Unranked', color: '#94a3b8', icon: '❓' },
@@ -23,6 +25,9 @@ const initialAccounts = [
 ]
 
 function App() {
+  const [session, setSession] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+
   const [accounts, setAccounts] = useState(() => {
     const saved = localStorage.getItem('marvel_accounts')
     return saved ? JSON.parse(saved) : initialAccounts
@@ -48,26 +53,67 @@ function App() {
     id: '', usuario_cuenta: '', email: '', contraseña: '', nivel: 1, rango: 'Unranked', division: '', estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', notas: ''
   })
 
+  // ── Auth: check session on load ──
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('marvel_settings')
+    const parsedSettings = savedSettings ? JSON.parse(savedSettings) : null
+    if (parsedSettings?.supabaseUrl && parsedSettings?.supabaseKey) {
+      supabaseService.init(parsedSettings.supabaseUrl, parsedSettings.supabaseKey)
+      authService.getSession().then(sess => {
+        setSession(sess)
+        setAuthLoading(false)
+        if (sess) loadUserSettings(sess.user.id)
+      }).catch(() => setAuthLoading(false))
+    } else {
+      setAuthLoading(false)
+    }
+  }, [])
+
+  // ── Load settings from Supabase DB ──
+  const loadUserSettings = async (userId) => {
+    try {
+      const dbSettings = await authService.getUserSettings(userId)
+      if (dbSettings) {
+        setSettings(prev => {
+          const merged = {
+            ...prev,
+            sheetsUrl: dbSettings.sheets_url || prev.sheetsUrl,
+            rivalsKey: dbSettings.rivals_key || prev.rivalsKey,
+            eldoradoKey: dbSettings.eldorado_key || prev.eldoradoKey
+          }
+          localStorage.setItem('marvel_settings', JSON.stringify(merged))
+          return merged
+        })
+      }
+    } catch (err) {
+      console.error('Error loading user settings:', err)
+    }
+  }
+
+  const handleLogin = async (newSession) => {
+    setSession(newSession)
+    await loadUserSettings(newSession.user.id)
+  }
+
+  const handleLogout = async () => {
+    await authService.signOut()
+    setSession(null)
+  }
+
   useEffect(() => {
     localStorage.setItem('marvel_accounts', JSON.stringify(accounts))
   }, [accounts])
 
   useEffect(() => {
     localStorage.setItem('marvel_settings', JSON.stringify(settings))
-  }, [settings])
-
-  useEffect(() => {
     if (settings.supabaseUrl && settings.supabaseKey) {
       supabaseService.init(settings.supabaseUrl, settings.supabaseKey)
+      // Save updated keys to DB when logged in
+      if (session?.user?.id) {
+        authService.saveUserSettings(session.user.id, settings).catch(console.error)
+      }
     }
-  }, [settings.supabaseUrl, settings.supabaseKey])
-
-  useEffect(() => {
-    // Cross-device sync: If we have a URL but no accounts, try to fetch immediately
-    if (settings.sheetsUrl && (accounts.length === 0 || accounts.length === initialAccounts.length)) {
-      syncAll()
-    }
-  }, [])
+  }, [settings])
 
   const openModal = (acc = null) => {
     if (acc) {
@@ -293,6 +339,20 @@ function App() {
     }
   }
 
+  // Show loading screen while checking session
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--primary)', letterSpacing: '0.3em' }}>CARGANDO...</p>
+      </div>
+    )
+  }
+
+  // Show login page if Supabase is configured but user is not logged in
+  if (settings.supabaseUrl && settings.supabaseKey && !session) {
+    return <LoginPage onLogin={handleLogin} />
+  }
+
   return (
     <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh', padding: '2rem' }}>
       {/* Floating Energy Particles */}
@@ -301,9 +361,19 @@ function App() {
         <div className="energy-particle" style={{ top: '70%', left: '80%', background: 'rgba(255, 215, 0, 0.1)', filter: 'blur(80px)', width: '300px', height: '300px', borderRadius: '50%', position: 'absolute' }}></div>
       </div>
 
-      <header className="hero-header" style={{ textAlign: 'center', marginBottom: '4rem', padding: '2rem 0' }}>
-        <h1 style={{ fontSize: '3.5rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>RIVALS ACCOUNT MANAGER</h1>
+      <header className="hero-header" style={{ textAlign: 'center', marginBottom: '3rem', padding: '2rem 0', position: 'relative' }}>
+        <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 3.5rem)', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>RIVALS ACCOUNT MANAGER</h1>
         <p style={{ color: 'var(--primary)', letterSpacing: '0.4em', fontWeight: '600', textTransform: 'uppercase', fontSize: '0.8rem' }}>Supreme Dynamic Database</p>
+        {session && (
+          <div style={{ position: 'absolute', top: '2rem', right: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{session.user.email}</span>
+            <button onClick={handleLogout} style={{
+              background: 'rgba(255,68,68,0.15)', border: '1px solid var(--danger)',
+              color: 'var(--danger)', borderRadius: '0.5rem', padding: '0.4rem 0.9rem',
+              cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'Inter, sans-serif', fontWeight: 600
+            }}>Cerrar sesión</button>
+          </div>
+        )}
       </header>
 
       <div className="tilt-wrapper" style={{ marginBottom: '2rem' }}>

@@ -324,7 +324,27 @@ tr:hover td {
     gap: 0;
   }
 
-  .btn {
+  /* Only make form submit/cancel buttons full width, NOT toolbar buttons */
+  .modal-overlay .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Toolbar buttons stay inline on mobile */
+  .tilt-card .btn {
+    width: auto;
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0;
+  }
+
+  .tilt-card .glass {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .tilt-card .glass>div {
     width: 100%;
     justify-content: center;
   }

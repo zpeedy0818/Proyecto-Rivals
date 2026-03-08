@@ -15,6 +15,11 @@ export const supabaseService = {
     },
 
     /**
+     * Returns the raw Supabase client instance.
+     */
+    client: () => supabase,
+
+    /**
      * Fetches all accounts from the 'accounts' table.
      */
     getAccounts: async () => {
