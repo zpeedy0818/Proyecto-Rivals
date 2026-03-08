@@ -90,6 +90,23 @@ function App() {
     setFormData({ ...formData, usuario_cuenta: username });
   }
 
+  const handleQuickLevelUpdate = async (account, increment) => {
+    const newLevel = Math.min(Math.max(account.nivel + increment, 1), 15);
+    if (newLevel === account.nivel) return;
+
+    const updatedAccount = { ...account, nivel: newLevel };
+    const newAccounts = accounts.map(a => a.id === account.id ? updatedAccount : a);
+    setAccounts(newAccounts);
+
+    if (settings.sheetsUrl) {
+      try {
+        await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
+      } catch (err) {
+        console.error("Quick level sync failed");
+      }
+    }
+  }
+
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de que quieres borrar esta cuenta?')) return
 
@@ -207,9 +224,17 @@ function App() {
                   <td>{acc.usuario_cuenta || <span style={{ color: 'var(--text-muted)' }}>-</span>}</td>
                   <td>{acc.email}</td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <span style={{ minWidth: '20px' }}>{acc.nivel}</span>
-                      <div className="progress-bg">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <button
+                        onClick={() => handleQuickLevelUpdate(acc, -1)}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}
+                      >-</button>
+                      <span style={{ minWidth: '15px', textAlign: 'center' }}>{acc.nivel}</span>
+                      <button
+                        onClick={() => handleQuickLevelUpdate(acc, 1)}
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer', borderRadius: '4px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}
+                      >+</button>
+                      <div className="progress-bg" style={{ marginLeft: '0.4rem' }}>
                         <div className="progress-fill" style={{ width: `${(acc.nivel / 15) * 100}%` }}></div>
                       </div>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>/15</span>
