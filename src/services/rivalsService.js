@@ -33,13 +33,20 @@ export const rivalsService = {
 
             const data = await response.json();
 
-            // Basic normalization based on the common response structure for community APIs
+            // The API response can be nested under 'player' or be directly in the root
+            const p = data.player || data;
+
+            // Try multiple common field names for level and ensure it's a number
+            // Often community APIs track 'level' as a string or have 'account_level'
+            const rawLevel = p.level || p.account_level || (p.rank && p.rank.season_max_level) || 0;
+            const parsedLevel = parseInt(rawLevel, 10);
+
             return {
-                level: data.player?.level || data.level || 1,
+                level: isNaN(parsedLevel) || parsedLevel <= 0 ? 1 : parsedLevel,
                 stats: {
-                    winRate: data.player?.stats?.win_rate || data.win_rate || '0%',
-                    matches: data.player?.stats?.matches || data.matches || 0,
-                    kda: data.player?.stats?.kda || data.kda || '0.0'
+                    winRate: p.stats?.win_rate || p.win_rate || '0%',
+                    matches: p.stats?.matches || p.matches || 0,
+                    kda: p.stats?.kda || p.kda || '0.0'
                 }
             };
         } catch (error) {
