@@ -25,17 +25,20 @@
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--dark-bg);
-  background-image: 
-    radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-    radial-gradient(at 50% 0%, hsla(225,39%,30%,0.3) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339,49%,30%,0.3) 0, transparent 50%);
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.3) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0.3) 0, transparent 50%);
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: 'Outfit', sans-serif;
   letter-spacing: -0.02em;
 }
@@ -130,9 +133,23 @@ tr:hover td {
   font-weight: 700;
 }
 
-.badge-subiendo { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
-.badge-vendido { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
-.badge-pausado { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+.badge-subiendo {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.badge-vendido {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.badge-pausado {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
 
 /* Progress Bar */
 .progress-bg {
@@ -147,4 +164,83 @@ tr:hover td {
   height: 100%;
   background: var(--secondary-gradient);
   transition: width 0.5s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .container {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1.5rem;
+    margin-bottom: 2rem !important;
+  }
+
+  header div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .table-container {
+    display: none;
+    /* Hide table on mobile */
+  }
+
+  .mobile-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin-top: 1rem;
+  }
+
+  .card-mobile {
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  .card-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .glass {
+    border-radius: 1.25rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-cards {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-mobile,
+tr {
+  animation: fadeIn 0.4s ease-out forwards;
 }

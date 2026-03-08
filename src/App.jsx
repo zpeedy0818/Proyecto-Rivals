@@ -38,6 +38,13 @@ function App() {
     localStorage.setItem('marvel_settings', JSON.stringify(settings))
   }, [settings])
 
+  useEffect(() => {
+    // Cross-device sync: If we have a URL but no accounts, try to fetch immediately
+    if (settings.sheetsUrl && (accounts.length === 0 || accounts.length === initialAccounts.length)) {
+      syncAll()
+    }
+  }, [])
+
   const openModal = (acc = null) => {
     if (acc) {
       setEditingAccount(acc)
@@ -307,6 +314,42 @@ function App() {
             </tbody>
           </table>
         </div>
+
+        <div className="mobile-cards">
+          {accounts.map((acc, index) => (
+            <div key={acc.id || index} className="glass card-mobile">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ color: 'var(--secondary)' }}>#{acc.id} {acc.usuario_cuenta}</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{acc.email}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span className={`badge ${getStatusBadge(acc.estado)}`}>{acc.estado}</span>
+                  {acc.stats && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.65rem', color: 'var(--success)' }}>
+                      WR: {acc.stats.winRate}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '0.75rem', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flex: 1 }}>Nivel de Cuenta</span>
+                <button onClick={() => handleQuickLevelUpdate(acc, -1)} className="btn-outline" style={{ width: '32px', height: '32px', borderRadius: '8px', padding: 0, justifyContent: 'center' }}>-</button>
+                <span style={{ fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{acc.nivel}</span>
+                <button onClick={() => handleQuickLevelUpdate(acc, 1)} className="btn-outline" style={{ width: '32px', height: '32px', borderRadius: '8px', padding: 0, justifyContent: 'center' }}>+</button>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-outline" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => openModal(acc)}>Editar</button>
+                {acc.usuario_cuenta && (
+                  <button className="btn btn-outline" style={{ fontSize: '0.8rem' }} onClick={() => handleFetchStats(acc)}>🔍</button>
+                )}
+                <button className="btn btn-outline" style={{ border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }} onClick={() => handleDelete(acc.id)}>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {isModalOpen && (
@@ -390,17 +433,22 @@ function App() {
           background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 110
         }}>
           <div className="glass" style={{ padding: '2.5rem', width: '600px', maxWidth: '90%' }}>
-            <h2 style={{ marginBottom: '1.5rem' }}>Configuración de Integraciones</h2>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>URL de Google Apps Script</label>
-              <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
-                placeholder="https://script.google.com/macros/s/.../exec"
-                value={settings.sheetsUrl} onChange={e => setSettings({ ...settings, sheetsUrl: e.target.value })} />
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Obligatorio para sincronización con Sheets.</p>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2 style={{ marginBottom: '0.5rem' }}>🌐 Sincronización en la Nube</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Copia tu URL de Google Sheets de tu PC y pégala aquí en tu teléfono para ver todas tus cuentas al instante.
+              </p>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Eldorado.gg API Key (Seller)</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Tu LLAVE de Sincronización (URL de Apps Script)</label>
+              <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={settings.sheetsUrl} onChange={e => setSettings({ ...settings, sheetsUrl: e.target.value })} />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Eldorado.gg API Key</label>
               <input type="password" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
                 placeholder="Tu API Key de vendedor"
                 value={settings.eldoradoKey} onChange={e => setSettings({ ...settings, eldoradoKey: e.target.value })} />
