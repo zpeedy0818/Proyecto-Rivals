@@ -2,20 +2,30 @@ export const rivalsService = {
     /**
      * Fetches player statistics from the unofficial Marvel Rivals API.
      * @param {string} username - The player's in-game name.
+     * @param {string} apiKey - Optional API key for MarvelRivalsAPI.com.
      * @returns {Promise<Object>} - Player data including level and basic stats.
      */
-    fetchPlayerStats: async (username) => {
+    fetchPlayerStats: async (username, apiKey = '') => {
         if (!username) return null;
 
         try {
+            const headers = {
+                'Accept': 'application/json'
+            };
+
+            if (apiKey) {
+                headers['x-api-key'] = apiKey;
+            }
+
             // Using the unoffical API endpoint
-            // Note: This is a public community API and might have rate limits or CORS restrictions
             const response = await fetch(`https://marvelrivalsapi.com/api/v1/find-player/${encodeURIComponent(username)}`, {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
+                headers: headers
             });
+
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('API Key inválida o requerida por la API externa');
+            }
 
             if (!response.ok) {
                 throw new Error('No se pudo encontrar el jugador o la API está saturada');

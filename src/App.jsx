@@ -18,7 +18,7 @@ function App() {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('marvel_settings')
-    return saved ? JSON.parse(saved) : { sheetsUrl: '', eldoradoKey: '' }
+    return saved ? JSON.parse(saved) : { sheetsUrl: '', eldoradoKey: '', rivalsKey: '' }
   })
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -115,7 +115,7 @@ function App() {
     }
 
     try {
-      const data = await rivalsService.fetchPlayerStats(account.usuario_cuenta);
+      const data = await rivalsService.fetchPlayerStats(account.usuario_cuenta, settings.rivalsKey);
       if (data) {
         const updatedAccount = {
           ...account,
@@ -399,12 +399,20 @@ function App() {
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Obligatorio para sincronización con Sheets.</p>
             </div>
 
-            <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Eldorado.gg API Key (Seller)</label>
               <input type="password" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
                 placeholder="Tu API Key de vendedor"
                 value={settings.eldoradoKey} onChange={e => setSettings({ ...settings, eldoradoKey: e.target.value })} />
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Usado para consultar estados de órdenes reales.</p>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Marvel Rivals API Key (Opcional)</label>
+              <input type="password" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                placeholder="Tu x-api-key de MarvelRivalsAPI.com"
+                value={settings.rivalsKey} onChange={e => setSettings({ ...settings, rivalsKey: e.target.value })} />
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Obligatorio para buscar jugadores por nombre de forma fiable.</p>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
