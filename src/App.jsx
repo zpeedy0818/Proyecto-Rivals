@@ -255,7 +255,7 @@ function App() {
             notas: item.notas || ''
           })).filter(a => a.id)
           setAccounts(mappedData)
-          
+
           // Migration: If Supabase is connected but empty, migrate Sheets data
           if (settings.supabaseUrl && settings.supabaseKey) {
             for (const acc of mappedData) {
@@ -593,7 +593,10 @@ function App() {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={() => setIsSettingsOpen(false)}>Cerrar y Guardar</button>
+              <button className="btn btn-primary" onClick={() => {
+                setIsSettingsOpen(false);
+                syncAll();
+              }}>Cerrar y Guardar</button>
             </div>
           </div>
         </div>
