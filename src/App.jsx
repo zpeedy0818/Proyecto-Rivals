@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { sheetsService } from './services/sheetsService'
 import { eldoradoService } from './services/eldoradoService'
+import { rivalsService } from './services/rivalsService'
 
 const initialAccounts = [
-  { id: '001', usuario_cuenta: 'Zpeedtag01', email: 'Zpeedtag01@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 5, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '' },
-  { id: '002', usuario_cuenta: 'RivalNova02', email: 'rivalnova02@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '' },
-  { id: '003', usuario_cuenta: 'RivalNova03', email: 'rivalnova03@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '' },
-  { id: '004', usuario_cuenta: 'RivalNova04', email: 'rivalnova04@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '' },
+  { id: '001', usuario_cuenta: 'Zpeedtag01', email: 'Zpeedtag01@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 5, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
+  { id: '002', usuario_cuenta: 'RivalNova02', email: 'rivalnova02@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
+  { id: '003', usuario_cuenta: 'RivalNova03', email: 'rivalnova03@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
+  { id: '004', usuario_cuenta: 'RivalNova04', email: 'rivalnova04@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
 ]
 
 function App() {
@@ -104,6 +105,34 @@ function App() {
       } catch (err) {
         console.error("Quick level sync failed");
       }
+    }
+  }
+
+  const handleFetchStats = async (account) => {
+    if (!account.usuario_cuenta) {
+      alert("La cuenta no tiene un nombre de usuario asignado.");
+      return;
+    }
+
+    try {
+      const data = await rivalsService.fetchPlayerStats(account.usuario_cuenta);
+      if (data) {
+        const updatedAccount = {
+          ...account,
+          nivel: data.level,
+          stats: data.stats
+        };
+        const newAccounts = accounts.map(a => a.id === account.id ? updatedAccount : a);
+        setAccounts(newAccounts);
+
+        if (settings.sheetsUrl) {
+          await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
+        }
+
+        alert(`Stats actualizadas para ${account.usuario_cuenta}:\nNivel: ${data.level}\nWin Rate: ${data.stats.winRate}`);
+      }
+    } catch (err) {
+      alert(`Error al buscar stats: El jugador no existe o su perfil es privado.`);
     }
   }
 
@@ -221,7 +250,23 @@ function App() {
               {accounts.map((acc, index) => (
                 <tr key={acc.id || index}>
                   <td style={{ fontWeight: 600, color: 'var(--secondary)' }}>#{acc.id}</td>
-                  <td>{acc.usuario_cuenta || <span style={{ color: 'var(--text-muted)' }}>-</span>}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {acc.usuario_cuenta || <span style={{ color: 'var(--text-muted)' }}>-</span>}
+                      {acc.usuario_cuenta && (
+                        <button
+                          onClick={() => handleFetchStats(acc)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--secondary)', opacity: 0.7 }}
+                          title="Consultar stats reales"
+                        >🔍</button>
+                      )}
+                      {acc.stats && (
+                        <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', background: 'rgba(52, 211, 153, 0.1)', color: 'var(--success)', borderRadius: '4px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                          WR: {acc.stats.winRate}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td>{acc.email}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
