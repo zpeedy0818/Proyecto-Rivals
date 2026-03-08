@@ -100,10 +100,15 @@ function App() {
     setAccounts(newAccounts)
     setIsModalOpen(false)
 
+    const accountToSave = {
+      ...formData,
+      fecha_creacion: formData.fecha_creacion || new Date().toISOString().split('T')[0]
+    }
+
     // Sync to Supabase (Priority)
     if (settings.supabaseUrl && settings.supabaseKey) {
       try {
-        await supabaseService.upsertAccount(formData)
+        await supabaseService.upsertAccount(accountToSave)
       } catch (err) {
         console.error("Supabase sync failed on save")
       }
@@ -112,7 +117,7 @@ function App() {
     // Sync to Sheets
     if (settings.sheetsUrl) {
       try {
-        await sheetsService.upsertAccount(settings.sheetsUrl, formData)
+        await sheetsService.upsertAccount(settings.sheetsUrl, accountToSave)
       } catch (err) {
         console.error("Sheets sync failed on save")
       }
@@ -240,6 +245,7 @@ function App() {
       if (settings.sheetsUrl) {
         const remoteData = await sheetsService.fetchData(settings.sheetsUrl)
         if (remoteData && remoteData.length > 0) {
+          const dateNow = new Date().toISOString().split('T')[0]
           const mappedData = remoteData.map(item => ({
             id: item.id || '',
             usuario_cuenta: item.usuario_cuenta || '',
@@ -251,7 +257,7 @@ function App() {
             estado: item.estado || 'Subiendo',
             precio_usd: parseFloat(item.precio_usd) || 0,
             plataforma: item.plataforma || 'PC',
-            fecha_creacion: item.fecha_creacion || '',
+            fecha_creacion: item.fecha_creacion && item.fecha_creacion !== "" ? item.fecha_creacion : dateNow,
             notas: item.notas || ''
           })).filter(a => a.id)
           setAccounts(mappedData)
