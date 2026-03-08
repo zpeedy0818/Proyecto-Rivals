@@ -2,12 +2,24 @@ import { useState, useEffect } from 'react'
 import { sheetsService } from './services/sheetsService'
 import { eldoradoService } from './services/eldoradoService'
 import { rivalsService } from './services/rivalsService'
+import { supabaseService } from './services/supabaseService'
+
+const RANK_TIERS = [
+  { name: 'Unranked', color: '#94a3b8', icon: '❓' },
+  { name: 'Bronce', color: '#cd7f32', icon: '🥉' },
+  { name: 'Plata', color: '#c0c0c0', icon: '🥈' },
+  { name: 'Oro', color: '#ffd700', icon: '🥇' },
+  { name: 'Platino', color: '#e5e4e2', icon: '💎' },
+  { name: 'Diamante', color: '#b9f2ff', icon: '💠' },
+  { name: 'Gran Maestro', color: '#ff4d4d', icon: '🏮' },
+  { name: 'Celestial', color: '#a855f7', icon: '✨' },
+  { name: 'Eternity', color: '#3b82f6', icon: '🌌' },
+  { name: 'One Above All', color: '#facc15', icon: '👑' }
+]
 
 const initialAccounts = [
-  { id: '001', usuario_cuenta: 'Zpeedtag01', email: 'Zpeedtag01@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 5, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
-  { id: '002', usuario_cuenta: 'RivalNova02', email: 'rivalnova02@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
-  { id: '003', usuario_cuenta: 'RivalNova03', email: 'rivalnova03@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
-  { id: '004', usuario_cuenta: 'RivalNova04', email: 'rivalnova04@gmail.com', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
+  { id: '001', usuario_cuenta: 'Zpeedtag01', email: 'Zpeedtag01@gmail.com', contraseña: '', nivel: 1, rango: 'Unranked', division: '', estado: 'Subiendo', precio_usd: 5, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
+  { id: '002', usuario_cuenta: 'RivalNova02', email: 'rivalnova02@gmail.com', contraseña: '', nivel: 1, rango: 'Unranked', division: '', estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', fecha_creacion: '2026-03-08', notas: '', stats: null },
 ]
 
 function App() {
@@ -18,7 +30,13 @@ function App() {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('marvel_settings')
-    return saved ? JSON.parse(saved) : { sheetsUrl: '', eldoradoKey: '', rivalsKey: '' }
+    return saved ? JSON.parse(saved) : {
+      sheetsUrl: '',
+      eldoradoKey: '',
+      rivalsKey: '',
+      supabaseUrl: '',
+      supabaseKey: ''
+    }
   })
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -27,7 +45,7 @@ function App() {
   const [isSyncing, setIsSyncing] = useState(false)
 
   const [formData, setFormData] = useState({
-    id: '', usuario_cuenta: '', email: '', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', notas: ''
+    id: '', usuario_cuenta: '', email: '', contraseña: '', nivel: 1, rango: 'Unranked', division: '', estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', notas: ''
   })
 
   useEffect(() => {
@@ -39,6 +57,12 @@ function App() {
   }, [settings])
 
   useEffect(() => {
+    if (settings.supabaseUrl && settings.supabaseKey) {
+      supabaseService.init(settings.supabaseUrl, settings.supabaseKey)
+    }
+  }, [settings.supabaseUrl, settings.supabaseKey])
+
+  useEffect(() => {
     // Cross-device sync: If we have a URL but no accounts, try to fetch immediately
     if (settings.sheetsUrl && (accounts.length === 0 || accounts.length === initialAccounts.length)) {
       syncAll()
@@ -48,12 +72,18 @@ function App() {
   const openModal = (acc = null) => {
     if (acc) {
       setEditingAccount(acc)
-      setFormData(acc)
+      setFormData({
+        ...acc,
+        rango: acc.rango || 'Unranked',
+        division: acc.division || ''
+      })
     } else {
       setEditingAccount(null)
       setFormData({
         id: String(accounts.length + 1).padStart(3, '0'),
-        usuario_cuenta: '', email: '', contraseña: '', nivel: 1, estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', notas: ''
+        usuario_cuenta: '', email: '', contraseña: '', nivel: 1,
+        rango: 'Unranked', division: '',
+        estado: 'Subiendo', precio_usd: 0, plataforma: 'PC', notas: ''
       })
     }
     setIsModalOpen(true)
@@ -69,7 +99,17 @@ function App() {
     }
     setAccounts(newAccounts)
     setIsModalOpen(false)
-    // Sync to Sheets if URL is present
+
+    // Sync to Supabase (Priority)
+    if (settings.supabaseUrl && settings.supabaseKey) {
+      try {
+        await supabaseService.upsertAccount(formData)
+      } catch (err) {
+        console.error("Supabase sync failed on save")
+      }
+    }
+
+    // Sync to Sheets
     if (settings.sheetsUrl) {
       try {
         await sheetsService.upsertAccount(settings.sheetsUrl, formData)
@@ -106,6 +146,14 @@ function App() {
     const newAccounts = accounts.map(a => a.id === account.id ? updatedAccount : a);
     setAccounts(newAccounts);
 
+    if (settings.supabaseUrl && settings.supabaseKey) {
+      try {
+        await supabaseService.upsertAccount(updatedAccount);
+      } catch (err) {
+        console.error("Supabase quick level update failed");
+      }
+    }
+
     if (settings.sheetsUrl) {
       try {
         await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
@@ -127,10 +175,16 @@ function App() {
         const updatedAccount = {
           ...account,
           nivel: data.level,
+          rango: data.rank || account.rango,
+          division: data.tier || account.division,
           stats: data.stats
         };
         const newAccounts = accounts.map(a => a.id === account.id ? updatedAccount : a);
         setAccounts(newAccounts);
+
+        if (settings.supabaseUrl && settings.supabaseKey) {
+          await supabaseService.upsertAccount(updatedAccount);
+        }
 
         if (settings.sheetsUrl) {
           await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
@@ -149,6 +203,15 @@ function App() {
     const newAccounts = accounts.filter(a => a.id !== id)
     setAccounts(newAccounts)
 
+    // Sync deletion to Supabase
+    if (settings.supabaseUrl && settings.supabaseKey) {
+      try {
+        await supabaseService.deleteAccount(id)
+      } catch (err) {
+        console.error("Supabase delete failed")
+      }
+    }
+
     // Sync deletion to Sheets
     if (settings.sheetsUrl) {
       try {
@@ -162,16 +225,29 @@ function App() {
   const syncAll = async () => {
     setIsSyncing(true)
     try {
+      // Try Supabase first (Modern, fast, real-time)
+      if (settings.supabaseUrl && settings.supabaseKey) {
+        const dbData = await supabaseService.getAccounts()
+        if (dbData && dbData.length > 0) {
+          setAccounts(dbData)
+          alert('Sincronización con Supabase (DB) completada.')
+          setIsSyncing(false)
+          return
+        }
+      }
+
+      // Fallback to Google Sheets
       if (settings.sheetsUrl) {
         const remoteData = await sheetsService.fetchData(settings.sheetsUrl)
         if (remoteData && remoteData.length > 0) {
-          // Normalizing headers just in case
           const mappedData = remoteData.map(item => ({
             id: item.id || '',
             usuario_cuenta: item.usuario_cuenta || '',
             email: item.email || '',
             contraseña: item.contraseña || '',
             nivel: parseInt(item.nivel) || 1,
+            rango: item.rango || 'Unranked',
+            division: item.division || '',
             estado: item.estado || 'Subiendo',
             precio_usd: parseFloat(item.precio_usd) || 0,
             plataforma: item.plataforma || 'PC',
@@ -179,13 +255,21 @@ function App() {
             notas: item.notas || ''
           })).filter(a => a.id)
           setAccounts(mappedData)
+          
+          // Migration: If Supabase is connected but empty, migrate Sheets data
+          if (settings.supabaseUrl && settings.supabaseKey) {
+            for (const acc of mappedData) {
+              await supabaseService.upsertAccount(acc)
+            }
+            alert('Datos de Sheets migrados a Supabase con éxito.')
+          }
         }
       }
 
       if (settings.eldoradoKey) {
         await eldoradoService.checkOrders(settings.eldoradoKey)
         alert(`Eldorado: Sincronización real completada. Consultadas órdenes para el vendedor.`)
-      } else {
+      } else if (!settings.supabaseUrl) {
         setTimeout(() => alert('Sincronización de Sheets completada.'), 1000)
       }
     } catch (err) {
@@ -244,7 +328,7 @@ function App() {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Usuario</th>
+                <th>Usuario / Rango</th>
                 <th>Email</th>
                 <th>Nivel</th>
                 <th>Estado</th>
@@ -258,20 +342,22 @@ function App() {
                 <tr key={acc.id || index}>
                   <td style={{ fontWeight: 600, color: 'var(--secondary)' }}>#{acc.id}</td>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {acc.usuario_cuenta || <span style={{ color: 'var(--text-muted)' }}>-</span>}
-                      {acc.usuario_cuenta && (
-                        <button
-                          onClick={() => handleFetchStats(acc)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--secondary)', opacity: 0.7 }}
-                          title="Consultar stats reales"
-                        >🔍</button>
-                      )}
-                      {acc.stats && (
-                        <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem', background: 'rgba(52, 211, 153, 0.1)', color: 'var(--success)', borderRadius: '4px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
-                          WR: {acc.stats.winRate}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {acc.usuario_cuenta || <span style={{ color: 'var(--text-muted)' }}>-</span>}
+                        {acc.usuario_cuenta && (
+                          <button
+                            onClick={() => handleFetchStats(acc)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--secondary)', opacity: 0.7 }}
+                            title="Consultar stats reales"
+                          >🔍</button>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem' }}>
+                        <span style={{ color: RANK_TIERS.find(r => r.name === acc.rango)?.color || '#94a3b8' }}>
+                          {RANK_TIERS.find(r => r.name === acc.rango)?.icon} {acc.rango} {acc.division}
                         </span>
-                      )}
+                      </div>
                     </div>
                   </td>
                   <td>{acc.email}</td>
@@ -321,6 +407,11 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ color: 'var(--secondary)' }}>#{acc.id} {acc.usuario_cuenta}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', marginBottom: '0.2rem' }}>
+                    <span style={{ color: RANK_TIERS.find(r => r.name === acc.rango)?.color || '#94a3b8' }}>
+                      {RANK_TIERS.find(r => r.name === acc.rango)?.icon} {acc.rango} {acc.division}
+                    </span>
+                  </div>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{acc.email}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -396,15 +487,37 @@ function App() {
 
               <div className="modal-form-grid">
                 <div className="form-group">
-                  <label className="form-label">Nivel Actual</label>
-                  <input className="glass form-input"
-                    type="number" min="1" max="15"
+                  <label className="form-label">Rango</label>
+                  <select className="glass form-input"
+                    value={formData.rango || 'Unranked'} onChange={e => setFormData({ ...formData, rango: e.target.value })}>
+                    {RANK_TIERS.map(tier => (
+                      <option key={tier.name} value={tier.name} style={{ background: '#1e293b' }}>
+                        {tier.icon} {tier.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">División</label>
+                  <select className="glass form-input"
+                    value={formData.division || ''} onChange={e => setFormData({ ...formData, division: e.target.value })}>
+                    <option value="" style={{ background: '#1e293b' }}>N/A</option>
+                    <option value="I" style={{ background: '#1e293b' }}>I</option>
+                    <option value="II" style={{ background: '#1e293b' }}>II</option>
+                    <option value="III" style={{ background: '#1e293b' }}>III</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-form-grid">
+                <div className="form-group">
+                  <label className="form-label">Nivel (1-15)</label>
+                  <input type="number" min="1" max="15" className="glass form-input"
                     value={formData.nivel} onChange={e => setFormData({ ...formData, nivel: parseInt(e.target.value) })} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Precio (USD)</label>
-                  <input className="glass form-input"
-                    type="number"
+                  <input type="number" className="glass form-input"
                     value={formData.precio_usd} onChange={e => setFormData({ ...formData, precio_usd: parseFloat(e.target.value) })} />
                 </div>
               </div>
@@ -462,6 +575,21 @@ function App() {
                 placeholder="Tu x-api-key de MarvelRivalsAPI.com"
                 value={settings.rivalsKey} onChange={e => setSettings({ ...settings, rivalsKey: e.target.value })} />
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Obligatorio para buscar jugadores por nombre de forma fiable.</p>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>📦 Base de Datos Principal (Supabase)</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                  placeholder="Supabase Project URL"
+                  value={settings.supabaseUrl} onChange={e => setSettings({ ...settings, supabaseUrl: e.target.value })} />
+                <input type="password" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                  placeholder="Supabase Anon Key"
+                  value={settings.supabaseKey} onChange={e => setSettings({ ...settings, supabaseKey: e.target.value })} />
+              </div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                Recomendado para sincronización instantánea y apps de producción.
+              </p>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>

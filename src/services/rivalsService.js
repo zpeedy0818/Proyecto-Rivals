@@ -43,6 +43,8 @@ export const rivalsService = {
 
             return {
                 level: isNaN(parsedLevel) || parsedLevel <= 0 ? 1 : parsedLevel,
+                rank: p.rank?.name || p.rank_name || 'Unranked',
+                tier: p.rank?.tier || p.tier || '',
                 stats: {
                     winRate: p.stats?.win_rate || p.win_rate || '0%',
                     matches: p.stats?.matches || p.matches || 0,
