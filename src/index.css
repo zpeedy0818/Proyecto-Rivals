@@ -166,6 +166,74 @@ tr:hover td {
   transition: width 0.5s ease;
 }
 
+/* New Responsive Classes */
+.main-header {
+  margin-bottom: 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.stats-grid {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  padding: 1rem 2rem;
+  flex: 1;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+}
+
+.modal-form-grid {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem;
+  color: white;
+  border: 1px solid var(--border-color);
+  outline: none;
+}
+
+.btn-suggest {
+  background: none;
+  border: none;
+  color: var(--secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .container {
@@ -174,27 +242,40 @@ tr:hover td {
 }
 
 @media (max-width: 768px) {
-  header {
+  .main-header {
     flex-direction: column;
-    align-items: flex-start !important;
+    align-items: center !important;
+    text-align: center;
     gap: 1.5rem;
-    margin-bottom: 2rem !important;
   }
 
-  header div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .stats-grid {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1.2rem;
+  }
+
+  .modal-form-grid {
+    flex-direction: column;
+    gap: 0;
   }
 
   .btn {
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
+    width: 100%;
+    justify-content: center;
   }
 
   .table-container {
     display: none;
-    /* Hide table on mobile */
   }
 
   .mobile-cards {
@@ -205,19 +286,14 @@ tr:hover td {
   }
 
   .card-mobile {
-    padding: 1.5rem;
+    padding: 1.2rem;
     position: relative;
   }
 
-  .card-stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .glass {
-    border-radius: 1.25rem;
+  .modal-overlay .glass {
+    padding: 1.5rem !important;
+    max-height: 95vh;
+    overflow-y: auto;
   }
 }
 

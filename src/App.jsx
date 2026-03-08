@@ -205,12 +205,12 @@ function App() {
 
   return (
     <div className="container">
-      <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="main-header">
         <div>
           <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Marvel Rivals Accounts</h1>
           <p style={{ color: 'var(--text-muted)' }}>Gestión profesional de cuentas de nivel 15</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div className="header-actions">
           <button className="btn btn-outline" onClick={() => setIsSettingsOpen(true)}>
             ⚙️ Ajustes
           </button>
@@ -224,18 +224,18 @@ function App() {
       </header>
 
       <div className="glass" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="glass" style={{ padding: '1rem 2rem', flex: 1 }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total Cuentas</p>
-            <h3 style={{ fontSize: '1.5rem', color: 'var(--secondary)' }}>{accounts.length}</h3>
+        <div className="stats-grid">
+          <div className="glass stat-card">
+            <p className="stat-label">Total Cuentas</p>
+            <h3 className="stat-value" style={{ color: 'var(--secondary)' }}>{accounts.length}</h3>
           </div>
-          <div className="glass" style={{ padding: '1rem 2rem', flex: 1 }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Subiendo</p>
-            <h3 style={{ fontSize: '1.5rem', color: 'var(--warning)' }}>{accounts.filter(a => a.estado === 'Subiendo').length}</h3>
+          <div className="glass stat-card">
+            <p className="stat-label">Subiendo</p>
+            <h3 className="stat-value" style={{ color: 'var(--warning)' }}>{accounts.filter(a => a.estado === 'Subiendo').length}</h3>
           </div>
-          <div className="glass" style={{ padding: '1rem 2rem', flex: 1 }}>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Vendidas</p>
-            <h3 style={{ fontSize: '1.5rem', color: 'var(--success)' }}>{accounts.filter(a => a.estado === 'Vendido').length}</h3>
+          <div className="glass stat-card">
+            <p className="stat-label">Vendidas</p>
+            <h3 className="stat-value" style={{ color: 'var(--success)' }}>{accounts.filter(a => a.estado === 'Vendido').length}</h3>
           </div>
         </div>
 
@@ -360,57 +360,58 @@ function App() {
           <div className="glass" style={{ padding: '2.5rem', width: '500px', maxWidth: '90%' }}>
             <h2 style={{ marginBottom: '1.5rem' }}>{editingAccount ? 'Editar Cuenta' : 'Nueva Cuenta'}</h2>
             <form onSubmit={handleSave}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>ID</label>
-                  <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+              <div className="modal-form-grid">
+                <div className="form-group">
+                  <label className="form-label">ID Cuenta</label>
+                  <input className="glass form-input"
                     value={formData.id} onChange={e => setFormData({ ...formData, id: e.target.value })} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Usuario</label>
-                    <button type="button" onClick={generateUsername} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>
-                      ⚡ Sugerir
-                    </button>
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <label className="form-label" style={{ marginBottom: 0 }}>Usuario Juego</label>
+                    <button type="button" className="btn-suggest" onClick={generateUsername}>⚡ Sugerir</button>
                   </div>
-                  <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                  <input className="glass form-input"
+                    placeholder="Ej: IronStriker99"
                     value={formData.usuario_cuenta} onChange={e => setFormData({ ...formData, usuario_cuenta: e.target.value })} />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Email</label>
-                <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+              <div className="form-group">
+                <label className="form-label">Email / Login</label>
+                <input className="glass form-input"
+                  placeholder="correo@ejemplo.com"
                   value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Contraseña</label>
-                  <button type="button" onClick={generatePassword} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'card-bold' }}>
-                    ⚡ Generar Segura
-                  </button>
+              <div className="form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Contraseña</label>
+                  <button type="button" className="btn-suggest" onClick={generatePassword}>⚡ Generar</button>
                 </div>
-                <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                <input className="glass form-input"
+                  type="text"
                   value={formData.contraseña} onChange={e => setFormData({ ...formData, contraseña: e.target.value })} />
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Nivel (1-15)</label>
-                  <input type="number" min="1" max="15" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+              <div className="modal-form-grid">
+                <div className="form-group">
+                  <label className="form-label">Nivel Actual</label>
+                  <input className="glass form-input"
+                    type="number" min="1" max="15"
                     value={formData.nivel} onChange={e => setFormData({ ...formData, nivel: parseInt(e.target.value) })} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Precio (USD)</label>
-                  <input type="number" className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
+                <div className="form-group">
+                  <label className="form-label">Precio (USD)</label>
+                  <input className="glass form-input"
+                    type="number"
                     value={formData.precio_usd} onChange={e => setFormData({ ...formData, precio_usd: parseFloat(e.target.value) })} />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Estado</label>
-                <select className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white', background: '#1e293b' }}
+              <div className="form-group" style={{ marginBottom: '2rem' }}>
+                <label className="form-label">Estado de Cuenta</label>
+                <select className="glass form-input"
                   value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value })}>
                   <option value="Subiendo">Subiendo</option>
                   <option value="Vendido">Vendido</option>
