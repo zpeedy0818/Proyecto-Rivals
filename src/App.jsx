@@ -80,6 +80,16 @@ function App() {
     setFormData({ ...formData, contraseña: password });
   }
 
+  const generateUsername = () => {
+    const prefixes = ['Iron', 'Spider', 'Hulk', 'Thanos', 'Nova', 'Rival', 'Super', 'Hyper', 'Nexus', 'Cosmic', 'Shadow', 'Eternal'];
+    const suffixes = ['Striker', 'Nova', 'Core', 'Agent', 'Prime', 'Soul', 'Pulse', 'Edge', 'Lord', 'King', 'Queen', 'Knight'];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+    const number = Math.floor(Math.random() * 99) + 1;
+    const username = `${prefix}${suffix}${String(number).padStart(2, '0')}`;
+    setFormData({ ...formData, usuario_cuenta: username });
+  }
+
   const handleDelete = async (id) => {
     if (!window.confirm('¿Estás seguro de que quieres borrar esta cuenta?')) return
 
@@ -244,7 +254,12 @@ function App() {
                     value={formData.id} onChange={e => setFormData({ ...formData, id: e.target.value })} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Usuario</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Usuario</label>
+                    <button type="button" onClick={generateUsername} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                      ⚡ Sugerir
+                    </button>
+                  </div>
                   <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
                     value={formData.usuario_cuenta} onChange={e => setFormData({ ...formData, usuario_cuenta: e.target.value })} />
                 </div>
