@@ -294,24 +294,33 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <header className="main-header">
-        <div>
-          <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Marvel Rivals Accounts</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Gestión profesional de cuentas de nivel 15</p>
-        </div>
-        <div className="header-actions">
+    <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh', padding: '2rem' }}>
+      {/* Floating Energy Particles */}
+      <div className="energy-bg" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: -1, overflow: 'hidden' }}>
+        <div className="energy-particle" style={{ top: '20%', left: '10%', background: 'rgba(0, 212, 255, 0.4)', filter: 'blur(60px)', width: '200px', height: '200px', borderRadius: '50%', position: 'absolute' }}></div>
+        <div className="energy-particle" style={{ top: '70%', left: '80%', background: 'rgba(255, 215, 0, 0.1)', filter: 'blur(80px)', width: '300px', height: '300px', borderRadius: '50%', position: 'absolute' }}></div>
+      </div>
+
+      <header className="hero-header" style={{ textAlign: 'center', marginBottom: '4rem', padding: '2rem 0' }}>
+        <h1 style={{ fontSize: '3.5rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>RIVALS ACCOUNT MANAGER</h1>
+        <p style={{ color: 'var(--primary)', letterSpacing: '0.4em', fontWeight: '600', textTransform: 'uppercase', fontSize: '0.8rem' }}>Supreme Dynamic Database</p>
+      </header>
+
+      <div className="tilt-wrapper" style={{ marginBottom: '2rem' }}>
+        <div className="glass tilt-card" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className="btn btn-primary" onClick={() => openModal()}>
+              <span>+</span> Nueva Cuenta
+            </button>
+            <button className={`btn btn-outline ${isSyncing ? 'syncing' : ''}`} onClick={syncAll} disabled={isSyncing}>
+              {isSyncing ? '⌛ Sincronizando...' : '🔄 Sincronizar'}
+            </button>
+          </div>
           <button className="btn btn-outline" onClick={() => setIsSettingsOpen(true)}>
             ⚙️ Ajustes
           </button>
-          <button className="btn btn-outline" onClick={syncAll} disabled={isSyncing}>
-            {isSyncing ? 'Sincronizando...' : '🔄 Sincronizar Todo'}
-          </button>
-          <button className="btn btn-primary" onClick={() => openModal()}>
-            <span>+</span> Nueva Cuenta
-          </button>
         </div>
-      </header>
+      </div>
 
       <div className="glass" style={{ padding: '1.5rem' }}>
         <div className="stats-grid">
