@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { sheetsService } from './services/sheetsService'
 import { eldoradoService } from './services/eldoradoService'
 import { rivalsService } from './services/rivalsService'
 import { supabaseService } from './services/supabaseService'
@@ -93,11 +92,24 @@ function App() {
   const handleLogin = async (newSession) => {
     setSession(newSession)
     await loadUserSettings(newSession.user.id)
+    // Immediately load this user's accounts from Supabase (don't trust localStorage)
+    setAccounts([])
+    try {
+      const userAccounts = await supabaseService.getAccounts(newSession.user.id)
+      if (userAccounts && userAccounts.length > 0) {
+        setAccounts(userAccounts)
+      }
+    } catch (err) {
+      console.error('Error loading accounts on login:', err)
+    }
   }
 
   const handleLogout = async () => {
     await authService.signOut()
     setSession(null)
+    // Clear accounts from memory and localStorage so the next user starts fresh
+    setAccounts([])
+    localStorage.removeItem('marvel_accounts')
   }
 
   useEffect(() => {
@@ -159,15 +171,6 @@ function App() {
         console.error("Supabase sync failed on save")
       }
     }
-
-    // Sync to Sheets
-    if (settings.sheetsUrl) {
-      try {
-        await sheetsService.upsertAccount(settings.sheetsUrl, accountToSave)
-      } catch (err) {
-        console.error("Sheets sync failed on save")
-      }
-    }
   }
 
   const generatePassword = () => {
@@ -204,14 +207,6 @@ function App() {
         console.error("Supabase quick level update failed");
       }
     }
-
-    if (settings.sheetsUrl) {
-      try {
-        await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
-      } catch (err) {
-        console.error("Quick level sync failed");
-      }
-    }
   }
 
   const handleFetchStats = async (account) => {
@@ -237,10 +232,6 @@ function App() {
           await supabaseService.upsertAccount(updatedAccount, session?.user?.id);
         }
 
-        if (settings.sheetsUrl) {
-          await sheetsService.upsertAccount(settings.sheetsUrl, updatedAccount);
-        }
-
         alert(`Stats actualizadas para ${account.usuario_cuenta}:\nNivel: ${data.level}\nWin Rate: ${data.stats.winRate}`);
       }
     } catch (err) {
@@ -262,67 +253,19 @@ function App() {
         console.error("Supabase delete failed")
       }
     }
-
-    // Sync deletion to Sheets
-    if (settings.sheetsUrl) {
-      try {
-        await sheetsService.deleteAccount(settings.sheetsUrl, id)
-      } catch (err) {
-        console.error("Sheets delete failed")
-      }
-    }
   }
 
   const syncAll = async () => {
     setIsSyncing(true)
     try {
-      // Try Supabase first (Modern, fast, real-time)
       if (settings.supabaseUrl && settings.supabaseKey) {
         const dbData = await supabaseService.getAccounts(session?.user?.id)
-        if (dbData && dbData.length > 0) {
+        if (dbData && dbData.length >= 0) {
           setAccounts(dbData)
-          alert('Sincronización con Supabase (DB) completada.')
-          setIsSyncing(false)
-          return
+          if (dbData.length > 0) alert('Sincronización con Supabase completada.')
         }
-      }
-
-      // Fallback to Google Sheets
-      if (settings.sheetsUrl) {
-        const remoteData = await sheetsService.fetchData(settings.sheetsUrl)
-        if (remoteData && remoteData.length > 0) {
-          const dateNow = new Date().toISOString().split('T')[0]
-          const mappedData = remoteData.map(item => ({
-            id: item.id || '',
-            usuario_cuenta: item.usuario_cuenta || '',
-            email: item.email || '',
-            contraseña: item.contraseña || '',
-            nivel: parseInt(item.nivel) || 1,
-            rango: item.rango || 'Unranked',
-            division: item.division || '',
-            estado: item.estado || 'Subiendo',
-            precio_usd: parseFloat(item.precio_usd) || 0,
-            plataforma: item.plataforma || 'PC',
-            fecha_creacion: item.fecha_creacion && item.fecha_creacion !== "" ? item.fecha_creacion : dateNow,
-            notas: item.notas || ''
-          })).filter(a => a.id)
-          setAccounts(mappedData)
-
-          // Migration: If Supabase is connected but empty, migrate Sheets data
-          if (settings.supabaseUrl && settings.supabaseKey) {
-            for (const acc of mappedData) {
-              await supabaseService.upsertAccount(acc, session?.user?.id)
-            }
-            alert('Datos de Sheets migrados a Supabase con éxito.')
-          }
-        }
-      }
-
-      if (settings.eldoradoKey) {
-        await eldoradoService.checkOrders(settings.eldoradoKey)
-        alert(`Eldorado: Sincronización real completada. Consultadas órdenes para el vendedor.`)
-      } else if (!settings.supabaseUrl) {
-        setTimeout(() => alert('Sincronización de Sheets completada.'), 1000)
+      } else {
+        alert('Configura Supabase en Ajustes para sincronizar.')
       }
     } catch (err) {
       alert('Error en la sincronización: ' + err.message)
@@ -633,17 +576,8 @@ function App() {
         }}>
           <div className="glass" style={{ padding: '2.5rem', width: '600px', maxWidth: '90%' }}>
             <div style={{ marginBottom: '2rem' }}>
-              <h2 style={{ marginBottom: '0.5rem' }}>🌐 Sincronización en la Nube</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                Copia tu URL de Google Sheets de tu PC y pégala aquí en tu teléfono para ver todas tus cuentas al instante.
-              </p>
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>Tu LLAVE de Sincronización (URL de Apps Script)</label>
-              <input className="glass" style={{ width: '100%', padding: '0.8rem', color: 'white' }}
-                placeholder="https://script.google.com/macros/s/.../exec"
-                value={settings.sheetsUrl} onChange={e => setSettings({ ...settings, sheetsUrl: e.target.value })} />
+              <h2 style={{ marginBottom: '0.5rem' }}>⚙️ Ajustes</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Configura tus integraciones externas.</p>
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
