@@ -24,8 +24,8 @@ export const supabaseService = {
      */
     getAccounts: async (userId) => {
         if (!supabase) return []
-        const query = supabase.from('accounts').select('*').order('id', { ascending: true })
-        if (userId) query.eq('user_id', userId)
+        let query = supabase.from('accounts').select('*').order('id', { ascending: true })
+        if (userId) query = query.eq('user_id', userId)
         const { data, error } = await query
 
         if (error) {
