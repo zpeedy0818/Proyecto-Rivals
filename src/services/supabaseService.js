@@ -20,14 +20,13 @@ export const supabaseService = {
     client: () => supabase,
 
     /**
-     * Fetches all accounts from the 'accounts' table.
+     * Fetches accounts belonging to the current user.
      */
-    getAccounts: async () => {
+    getAccounts: async (userId) => {
         if (!supabase) return []
-        const { data, error } = await supabase
-            .from('accounts')
-            .select('*')
-            .order('id', { ascending: true })
+        const query = supabase.from('accounts').select('*').order('id', { ascending: true })
+        if (userId) query.eq('user_id', userId)
+        const { data, error } = await query
 
         if (error) {
             console.error('Supabase Error:', error)
@@ -37,14 +36,14 @@ export const supabaseService = {
     },
 
     /**
-     * Upserts an account into the 'accounts' table.
-     * @param {Object} account - The account data to save.
+     * Upserts an account, always stamping the user_id.
      */
-    upsertAccount: async (account) => {
+    upsertAccount: async (account, userId) => {
         if (!supabase) return
+        const payload = userId ? { ...account, user_id: userId } : account
         const { data, error } = await supabase
             .from('accounts')
-            .upsert(account)
+            .upsert(payload)
             .select()
 
         if (error) {

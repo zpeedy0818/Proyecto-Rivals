@@ -154,7 +154,7 @@ function App() {
     // Sync to Supabase (Priority)
     if (settings.supabaseUrl && settings.supabaseKey) {
       try {
-        await supabaseService.upsertAccount(accountToSave)
+        await supabaseService.upsertAccount(accountToSave, session?.user?.id)
       } catch (err) {
         console.error("Supabase sync failed on save")
       }
@@ -199,7 +199,7 @@ function App() {
 
     if (settings.supabaseUrl && settings.supabaseKey) {
       try {
-        await supabaseService.upsertAccount(updatedAccount);
+        await supabaseService.upsertAccount(updatedAccount, session?.user?.id);
       } catch (err) {
         console.error("Supabase quick level update failed");
       }
@@ -234,7 +234,7 @@ function App() {
         setAccounts(newAccounts);
 
         if (settings.supabaseUrl && settings.supabaseKey) {
-          await supabaseService.upsertAccount(updatedAccount);
+          await supabaseService.upsertAccount(updatedAccount, session?.user?.id);
         }
 
         if (settings.sheetsUrl) {
@@ -278,7 +278,7 @@ function App() {
     try {
       // Try Supabase first (Modern, fast, real-time)
       if (settings.supabaseUrl && settings.supabaseKey) {
-        const dbData = await supabaseService.getAccounts()
+        const dbData = await supabaseService.getAccounts(session?.user?.id)
         if (dbData && dbData.length > 0) {
           setAccounts(dbData)
           alert('Sincronización con Supabase (DB) completada.')
@@ -311,7 +311,7 @@ function App() {
           // Migration: If Supabase is connected but empty, migrate Sheets data
           if (settings.supabaseUrl && settings.supabaseKey) {
             for (const acc of mappedData) {
-              await supabaseService.upsertAccount(acc)
+              await supabaseService.upsertAccount(acc, session?.user?.id)
             }
             alert('Datos de Sheets migrados a Supabase con éxito.')
           }
